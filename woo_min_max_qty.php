@@ -24,6 +24,9 @@ if ( ! class_exists('Woo_min_max_qty' ) ) {
 
 			$this->define_constants();
 
+			require_once ( PLUGIN_PATH . 'settings/woo_min_max_license_settings.php' );
+			new Woo_min_max_license_settings();
+
 			require_once ( PLUGIN_PATH . 'settings/woo_min_max_qty_settings.php' );
 			new Woo_min_max_qty_settings();
 		}
