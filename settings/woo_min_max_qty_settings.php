@@ -64,7 +64,7 @@ if ( ! class_exists('Woo_min_max_qty_settings' ) ) {
 				if( $product_in_stock < 10 ) {
 					$args[ 'max_qty' ] = $product_in_stock;
 				}
-				
+
 				if( $product_in_stock == 1 ) {
 					$args[ 'min_qty' ] = 1;
 				}

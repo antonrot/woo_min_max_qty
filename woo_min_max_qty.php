@@ -14,11 +14,26 @@
  * Domain Path: /languages
  */
 
-if ( ! class_exists('Woo_min_max_qty')) {
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! class_exists('Woo_min_max_qty' ) ) {
 	class Woo_min_max_qty {
 		public function __construct() {
-			
+
+			$this->define_constants();
+
+			require_once ( PLUGIN_PATH . 'settings/woo_min_max_qty_settings.php' );
+			new Woo_min_max_qty_settings();
 		}
+
+		public function define_constants() {
+			define('PLUGIN_PATH', plugin_dir_path(__FILE__));
+			define('PLUGIN_URL', plugin_dir_url(__FILE__));
+			define('PLUGIN_VERSION', '1.0.0');
+		}
+
 	}
 }
 
