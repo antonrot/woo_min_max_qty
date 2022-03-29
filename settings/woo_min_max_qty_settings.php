@@ -6,13 +6,77 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists('Woo_min_max_qty_settings' ) ) {
 
 	class Woo_min_max_qty_settings {
+
 		public function __construct() {
+            //.checkout-button
+            add_action( 'wp_enqueue_scripts', [$this, 'register_scripts'], 1);
 			add_filter( 'woocommerce_quantity_input_args',  [ $this, 'quantity_stock_base_args' ], 10, 2 );
 			add_action( 'woocommerce_product_options_inventory_product_data', [ $this, 'add_min_max_qty_fields' ] );
             add_action( 'woocommerce_process_product_meta', [ $this, 'save_product_min_max_qty_fields' ] );
             add_action( 'woocommerce_variation_options_dimensions', [ $this, 'add_min_max_qty_fields_variation_product' ], 10 ,3 );
             add_action( 'woocommerce_save_product_variation', [ $this, 'save_product_min_max_qty_variation_product_fields' ], 10, 2 );
+            add_action( 'woocommerce_proceed_to_checkout', [ $this, 'proceed_to_checkout' ] );
 		}
+
+        public function register_scripts() {
+            wp_register_script(
+               'min_max_qty_js',
+                PLUGIN_URL . 'assets/js/min_max_qty.js',
+                ['jquery'],
+                PLUGIN_VERSION,
+                true
+            );
+        }
+
+        public function proceed_to_checkout(){
+
+            foreach(WC()->cart->cart_contents as $cart_keys => $cart_values) {
+
+                if( $cart_values['variation_id'] > 0 ) {
+                    wp_enqueue_script('min_max_qty_js');
+                    if(
+                        $cart_values['quantity'] < get_post_meta( $cart_values['variation_id'], 'min_qty', true )
+                        || $cart_values['quantity'] > get_post_meta( $cart_values['variation_id'], 'max_qty', true )
+                    ) {
+                        $product = wc_get_product( $cart_values['variation_id'] );
+                        $variation_title_pre =  $product->get_formatted_name();
+                        $this->invalid_quantity_template(
+                            $product->get_formatted_name(),
+                            get_post_meta( $cart_values['variation_id'], 'min_qty', true ),
+                            get_post_meta( $cart_values['variation_id'], 'max_qty', true )
+                        );
+
+                    }
+
+                } else {
+                    if(
+                        $cart_values['quantity'] < get_post_meta( $cart_values['product_id'], 'min_qty', true )
+                        || $cart_values['quantity'] > get_post_meta( $cart_values['product_id'], 'max_qty', true )
+                    ){
+                        wp_enqueue_script('min_max_qty_js');
+                        $product = wc_get_product( $cart_values['product_id'] );
+                        $variation_title_pre =  $product->get_formatted_name();
+                        $this->invalid_quantity_template(
+                            $product->get_formatted_name(),
+                            get_post_meta( $cart_values['product_id'], 'min_qty', true ),
+                            get_post_meta( $cart_values['product_id'], 'max_qty', true )
+                        );
+                    }
+                }
+            }
+        }
+
+        public function invalid_quantity_template( $product_name, $min_qty, $max_qty ){
+            ?>
+              <div style="color:#E62E52">
+                  Invalid order quantity for product: <?php echo $product_name ?>
+              </div>
+              <div style="color:#E62E52">
+                  Minimum <?php echo $min_qty ?> items, maximum <?php echo $max_qty ?> items, per order for this product
+              </div>
+            <hr>
+            <?php
+        }
 
         public function save_product_min_max_qty_variation_product_fields( $variation_id, $index ) {
 
